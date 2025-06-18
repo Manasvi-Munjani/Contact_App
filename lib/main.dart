@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return const GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Contacts App',
-      home: AddContact(),
+      home: ContactsScreen(),
     );
   }
 }

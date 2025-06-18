@@ -3,7 +3,6 @@ import 'package:contact_app/constant/app_image_const.dart';
 import 'package:contact_app/screens/add_contact.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 class ContactsScreen extends StatelessWidget {
   const ContactsScreen({super.key});

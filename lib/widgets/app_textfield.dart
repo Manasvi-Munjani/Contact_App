@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class AppTextfield extends StatelessWidget {
   final String labelText;
   final String hintText;
+  final FocusNode? focusNode;
   final TextEditingController controller;
   final String? Function(String?)? validator;
 
@@ -11,6 +12,7 @@ class AppTextfield extends StatelessWidget {
     super.key,
     required this.labelText,
     required this.hintText,
+    this.focusNode,
     required this.controller,
     this.validator,
   });
@@ -24,7 +26,9 @@ class AppTextfield extends StatelessWidget {
         fontSize: 14,
       ),
       controller: controller,
+      focusNode: focusNode,
       decoration: InputDecoration(
+
         hintText: hintText,
         hintStyle: TextStyle(
           color: AppColorConst.appBlack.withOpacity(0.4),
@@ -50,6 +54,7 @@ class AppTextfield extends StatelessWidget {
             color: AppColorConst.appBlack.withOpacity(0.4),
           ),
         ),
+
       ),
       validator: validator,
     );
