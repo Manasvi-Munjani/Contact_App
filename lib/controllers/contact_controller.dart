@@ -42,7 +42,6 @@ class ContactController extends GetxController {
     phoneController.dispose();
   }
 
-
 // .....................Initialize First letter.....................
   var inItial = ''.obs;
 

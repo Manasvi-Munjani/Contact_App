@@ -11,6 +11,7 @@ class AddContact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ContactController contactController = Get.put(ContactController());
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       contactController.firstNameFocusNode.requestFocus();
     });
@@ -107,11 +108,9 @@ class AddContact extends StatelessWidget {
                       ),
                       Expanded(
                         child: SingleChildScrollView(
-                          child:  Column(
-
+                          child: Column(
                             children: [
-
-                              Text(
+                              const Text(
                                 'Add Photo',
                                 style: TextStyle(
                                   color: AppColorConst.appBlue,
@@ -123,14 +122,16 @@ class AddContact extends StatelessWidget {
                               AppTextfield(
                                 labelText: 'First name',
                                 hintText: 'Enter your first name',
-                                controller: contactController.firstNameController,
+                                controller:
+                                    contactController.firstNameController,
                                 focusNode: contactController.firstNameFocusNode,
                               ),
                               const SizedBox(height: 13),
                               AppTextfield(
                                 labelText: 'Last name',
                                 hintText: 'Enter your last name',
-                                controller: contactController.lastNameController,
+                                controller:
+                                    contactController.lastNameController,
                               ),
                               const SizedBox(height: 13),
                               AppTextfield(
@@ -143,7 +144,6 @@ class AddContact extends StatelessWidget {
                           ),
                         ),
                       ),
-
                     ],
                   ),
                 ),
