@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io' as io;
+import 'package:contact_app/models/contact_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
@@ -63,16 +65,7 @@ class ContactController extends GetxController {
 // .....................AddContact DONE Button.....................
   final GlobalKey<FormState> formkey = GlobalKey();
 
-/*
-  void addContact() {
-    try {
-      if (formkey.currentState!.validate()) {}
-    } catch (e) {
-      log('Error: $e');
-    }
-  }*/
-
-  void addContact() async {
+  /*void addContact() async {
     try {
       if (formkey.currentState!.validate()) {
         await uploadImageToCloudinary();
@@ -85,7 +78,40 @@ class ContactController extends GetxController {
       log('Error: $e');
       Get.snackbar('Error', 'Something went wrong');
     }
+  }*/
+  void addContact() async {
+    try {
+      if (formkey.currentState!.validate()) {
+        await uploadImageToCloudinary();
+
+        final contact = ContactModel(
+          firstName: firstNameController.text.trim(),
+          lastName: lastNameController.text.trim(),
+          phone: phoneController.text.trim(),
+          imageUrl: uploadedImageUrl.value,
+        );
+
+        final box = Hive.box<ContactModel>('contacts');
+        await box.add(contact);
+
+        Get.snackbar('Success', 'Contact saved successfully!');
+
+        // Clear fields
+        firstNameController.clear();
+        lastNameController.clear();
+        phoneController.clear();
+        uploadedImageUrl.value = '';
+        pickedImage.value = null;
+        webImage.value = null;
+        fileImage.value = null;
+        inItial.value = '';
+      }
+    } catch (e) {
+      log('Error: $e');
+      Get.snackbar('Error', 'Something went wrong');
+    }
   }
+
 
 // .....................Pick Image.....................
 
