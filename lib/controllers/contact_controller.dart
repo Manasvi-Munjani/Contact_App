@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io' as io;
 import 'package:contact_app/models/contact_model.dart';
+import 'package:contact_app/screens/contacts_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -96,7 +97,6 @@ class ContactController extends GetxController {
 
         Get.snackbar('Success', 'Contact saved successfully!');
 
-        // Clear fields
         firstNameController.clear();
         lastNameController.clear();
         phoneController.clear();
@@ -106,11 +106,48 @@ class ContactController extends GetxController {
         fileImage.value = null;
         inItial.value = '';
       }
+      Get.off(const ContactsScreen());
     } catch (e) {
       log('Error: $e');
       Get.snackbar('Error', 'Something went wrong');
     }
   }
+
+
+// ...............Sort list contact....................
+
+  void sortContacts(Box<ContactModel> box, bool ascending) {
+    final contacts = box.values.toList();
+
+    contacts.sort((a, b) =>
+    ascending
+        ? a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase())
+        : b.firstName.toLowerCase().compareTo(a.firstName.toLowerCase()));
+
+    // clear and rewrite sorted
+    box.clear();
+    for (var contact in contacts) {
+      box.add(contact);
+    }
+  }
+
+/*
+  RxList<ContactModel> sortedContacts = <ContactModel>[].obs;
+
+  void loadContacts(Box<ContactModel> box) {
+    sortedContacts.value = box.values.toList();
+  }
+
+  void sortContacts(Box<ContactModel> box, bool ascending) {
+    final contacts = box.values.toList();
+
+    contacts.sort((a, b) => ascending
+        ? a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase())
+        : b.firstName.toLowerCase().compareTo(a.firstName.toLowerCase()));
+
+    sortedContacts.value = contacts; // trigger UI update
+  }
+*/
 
 
 // .....................Pick Image.....................
@@ -145,7 +182,12 @@ class ContactController extends GetxController {
     const uploadPresent = "flutter_unsigned";
 
     final url =
-        Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+    Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+
+    if ((kIsWeb && webImage.value == null) ||
+        (!kIsWeb && fileImage.value == null)) {
+      return;
+    }
 
     var request = http.MultipartRequest('POST', url);
     request.fields['upload_preset'] = uploadPresent;
@@ -160,10 +202,8 @@ class ContactController extends GetxController {
     } else if (fileImage.value != null) {
       request.files.add(
           await http.MultipartFile.fromPath('file', fileImage.value!.path));
-    } else {
-      Get.snackbar('Error', 'No image selected');
-      return;
     }
+
     final response = await request.send();
 
     if (response.statusCode == 200) {
@@ -171,8 +211,6 @@ class ContactController extends GetxController {
       final data = json.decode(resStr);
       uploadedImageUrl.value = data['secure_url'];
       Get.snackbar('Success', 'Image uploaded!');
-    } else {
-      Get.snackbar('Upload Failed', 'Status code: ${response.statusCode}');
     }
   }
 }

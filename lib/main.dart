@@ -1,4 +1,5 @@
 import 'package:contact_app/models/contact_model.dart';
+import 'package:contact_app/models/contact_model_adapter.dart';
 import 'package:contact_app/screens/contacts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
