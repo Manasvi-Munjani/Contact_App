@@ -113,42 +113,54 @@ class ContactController extends GetxController {
     }
   }
 
-
 // ...............Sort list contact....................
 
-  void sortContacts(Box<ContactModel> box, bool ascending) {
-    final contacts = box.values.toList();
-
-    contacts.sort((a, b) =>
-    ascending
-        ? a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase())
-        : b.firstName.toLowerCase().compareTo(a.firstName.toLowerCase()));
-
-    // clear and rewrite sorted
-    box.clear();
-    for (var contact in contacts) {
-      box.add(contact);
-    }
-  }
-
-/*
-  RxList<ContactModel> sortedContacts = <ContactModel>[].obs;
-
-  void loadContacts(Box<ContactModel> box) {
-    sortedContacts.value = box.values.toList();
-  }
-
-  void sortContacts(Box<ContactModel> box, bool ascending) {
+  /* void sortContacts(Box<ContactModel> box, bool ascending) {
     final contacts = box.values.toList();
 
     contacts.sort((a, b) => ascending
         ? a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase())
         : b.firstName.toLowerCase().compareTo(a.firstName.toLowerCase()));
 
-    sortedContacts.value = contacts; // trigger UI update
+      box.clear();
+    for (var contact in contacts) {
+      box.add(contact);
+    }
   }
 */
+  void sortContacts(Box<ContactModel> box, bool ascending,
+      {bool sortByFirstName = true}) {
+    final contacts = box.values.toList();
 
+    contacts.sort((a, b) {
+      String aName = sortByFirstName ? a.firstName.trim() : a.lastName.trim();
+      String bName = sortByFirstName ? b.firstName.trim() : b.lastName.trim();
+
+      String aChar = aName.isNotEmpty ? aName[0].toUpperCase() : '';
+      String bChar = bName.isNotEmpty ? bName[0].toUpperCase() : '';
+
+      bool aIsLetter = RegExp(r'^[A-Z]$').hasMatch(aChar);
+      bool bIsLetter = RegExp(r'^[A-Z]$').hasMatch(bChar);
+
+      if (aIsLetter && bIsLetter) {
+        return ascending
+            ? aName.toLowerCase().compareTo(bName.toLowerCase())
+            : bName.toLowerCase().compareTo(aName.toLowerCase());
+      }
+
+      if (aIsLetter && !bIsLetter) return -1;
+      if (!aIsLetter && bIsLetter) return 1;
+
+      return ascending
+          ? aName.toLowerCase().compareTo(bName.toLowerCase())
+          : bName.toLowerCase().compareTo(aName.toLowerCase());
+    });
+
+    box.clear();
+    for (var contact in contacts) {
+      box.add(contact);
+    }
+  }
 
 // .....................Pick Image.....................
 
@@ -182,7 +194,7 @@ class ContactController extends GetxController {
     const uploadPresent = "flutter_unsigned";
 
     final url =
-    Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+        Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
 
     if ((kIsWeb && webImage.value == null) ||
         (!kIsWeb && fileImage.value == null)) {

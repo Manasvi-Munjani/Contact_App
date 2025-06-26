@@ -3,6 +3,7 @@ import 'package:contact_app/constant/app_image_const.dart';
 import 'package:contact_app/controllers/contact_controller.dart';
 import 'package:contact_app/models/contact_model.dart';
 import 'package:contact_app/screens/add_contact.dart';
+import 'package:contact_app/screens/contact_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
@@ -38,38 +39,23 @@ class ContactsScreen extends StatelessWidget {
                     } else if (value == 'Delete all') {}
                   },
                   itemBuilder: (context) => [
-                /*    const PopupMenuItem(
-                      value: 'Sort by',
-                      child: Row(
-                        children: [
-                          Text(
-                            'Sort by',
-                            style: TextStyle(
-                                color: AppColorConst.appBlack,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500),
-                          ),
-                          Spacer(),
-                          Icon(Icons.arrow_right, size: 22),
-                        ],
-                      ),
-                    ),*/
-
                     PopupMenuItem(
                       child: GestureDetector(
                         onTapDown: (details) async {
-                          Navigator.pop(context); // close main menu
+                          // Navigator.pop(context);
+                          Get.back();
                           final position = details.globalPosition;
 
                           final selected = await showMenu(
                             context: context,
-                            position: RelativeRect.fromLTRB(position.dx, position.dy, 0, 0),
+                            position: RelativeRect.fromLTRB(
+                                position.dx, position.dy, 0, 0),
                             items: [
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'A-Z',
                                 child: Text('A-Z'),
                               ),
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 value: 'Z-A',
                                 child: Text('Z-A'),
                               ),
@@ -78,14 +64,14 @@ class ContactsScreen extends StatelessWidget {
 
                           if (selected == 'A-Z') {
                             final box = Hive.box<ContactModel>('contacts');
-                           contactController.sortContacts(box, true);
+                            contactController.sortContacts(box, true);
                           } else if (selected == 'Z-A') {
                             final box = Hive.box<ContactModel>('contacts');
-                           contactController.sortContacts(box, false);
+                            contactController.sortContacts(box, false);
                           }
                         },
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Text(
                               'Sort by',
                               style: TextStyle(
@@ -100,16 +86,20 @@ class ContactsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-
-
-                    const PopupMenuItem(
-                      child: Text(
-                        'Delete all',
-                        style: TextStyle(
-                            color: AppColorConst.appBlack,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500),
+                    PopupMenuItem(
+                      child: GestureDetector(
+                        onTap: () {
+                          Get.back();
+                          final box = Hive.box<ContactModel>('contacts');
+                          box.clear();
+                        },
+                        child: const Text(
+                          'Delete all',
+                          style: TextStyle(
+                              color: AppColorConst.appBlack,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500),
+                        ),
                       ),
                     )
                   ],
@@ -148,59 +138,96 @@ class ContactsScreen extends StatelessWidget {
                       itemCount: box.length,
                       itemBuilder: (context, index) {
                         final contact = box.getAt(index)!;
-                        return Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColorConst.appWhite,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 25,
-                                backgroundImage: box.isNotEmpty &&
-                                        contact.imageUrl.isNotEmpty
-                                    ? NetworkImage(contact.imageUrl)
-                                        as ImageProvider
-                                    : null,
-                                child: box.isEmpty || contact.imageUrl.isEmpty
-                                    ? Text(
-                                        '${contact.firstName[0].toUpperCase()}${contact.lastName[0].toUpperCase()}',
-                                        style: TextStyle(
-                                            color: AppColorConst.appBlack
-                                                .withOpacity(0.4),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 15),
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${contact.firstName} ${contact.lastName}',
-                                    style: const TextStyle(
-                                        color: AppColorConst.appBlack,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w400),
-                                  ),
-                                  Text(
-                                    contact.phone,
-                                    style: const TextStyle(
-                                        color: AppColorConst.appBlack,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              const Icon(
-                                Icons.phone,
-                                color: AppColorConst.appGreen,
-                              )
-                            ],
+                        return GestureDetector(
+                          onTap: () => Get.off(
+                              () => ContactDetailScreen(contactModel: contact)),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColorConst.appWhite,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 25,
+                                  backgroundImage: box.isNotEmpty &&
+                                          contact.imageUrl.isNotEmpty
+                                      ? NetworkImage(contact.imageUrl)
+                                          as ImageProvider
+                                      : null,
+                                  child: box.isEmpty || contact.imageUrl.isEmpty
+                                      ? contact.firstName.isNotEmpty &&
+                                              contact.lastName.isNotEmpty
+                                          ? Text(
+                                              '${contact.firstName[0].toUpperCase()}${contact.lastName[0].toUpperCase()}',
+                                              style: TextStyle(
+                                                  color: AppColorConst.appBlack
+                                                      .withOpacity(0.4),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15),
+                                            )
+                                          : contact.firstName.isNotEmpty
+                                              ? Text(
+                                                  contact.firstName[0]
+                                                      .toUpperCase(),
+                                                  style: TextStyle(
+                                                      color: AppColorConst
+                                                          .appBlack
+                                                          .withOpacity(0.4),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 15),
+                                                )
+                                              : contact.lastName.isNotEmpty
+                                                  ? Text(
+                                                      contact.lastName[0]
+                                                          .toUpperCase(),
+                                                      style: TextStyle(
+                                                          color: AppColorConst
+                                                              .appBlack
+                                                              .withOpacity(0.4),
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 15),
+                                                    )
+                                                  : Icon(
+                                                      Icons.person,
+                                                      size: 24,
+                                                      color: AppColorConst
+                                                          .appBlack
+                                                          .withOpacity(0.4),
+                                                    )
+                                      : null,
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${contact.firstName} ${contact.lastName}',
+                                      style: const TextStyle(
+                                          color: AppColorConst.appBlack,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                    Text(
+                                      contact.phone,
+                                      style: const TextStyle(
+                                          color: AppColorConst.appBlack,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                const Icon(
+                                  Icons.phone,
+                                  color: AppColorConst.appGreen,
+                                )
+                              ],
+                            ),
                           ),
                         );
                       });
