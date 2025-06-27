@@ -17,6 +17,11 @@ class ContactController extends GetxController {
   final phoneController = TextEditingController();
   final FocusNode firstNameFocusNode = FocusNode();
 
+  bool lastSortAscending = true;
+  bool lastSortByFirstName = true;
+
+  final RxList<ContactModel> displayedContacts = <ContactModel>[].obs;
+
 // .....................textField fill.....................
   var isAnyFieldFill = false.obs;
 
@@ -29,6 +34,11 @@ class ContactController extends GetxController {
 
     firstNameController.addListener(editInitial);
     lastNameController.addListener(editInitial);
+
+    lastSortByFirstName = true;
+    lastSortAscending = true;
+
+    loadContacts();
   }
 
   void isCheckField() {
@@ -66,20 +76,6 @@ class ContactController extends GetxController {
 // .....................AddContact DONE Button.....................
   final GlobalKey<FormState> formkey = GlobalKey();
 
-  /*void addContact() async {
-    try {
-      if (formkey.currentState!.validate()) {
-        await uploadImageToCloudinary();
-
-        log("Image URL: ${uploadedImageUrl.value}");
-
-        Get.snackbar('Success', 'Contact saved with image!');
-      }
-    } catch (e) {
-      log('Error: $e');
-      Get.snackbar('Error', 'Something went wrong');
-    }
-  }*/
   void addContact() async {
     try {
       if (formkey.currentState!.validate()) {
@@ -95,7 +91,7 @@ class ContactController extends GetxController {
         final box = Hive.box<ContactModel>('contacts');
         await box.add(contact);
 
-        Get.snackbar('Success', 'Contact saved successfully!');
+        // Get.snackbar('Success', 'Contact saved successfully!');
 
         firstNameController.clear();
         lastNameController.clear();
@@ -105,64 +101,90 @@ class ContactController extends GetxController {
         webImage.value = null;
         fileImage.value = null;
         inItial.value = '';
+
+        sortContacts(lastSortAscending, sortByFirstName: lastSortByFirstName);
+
+        Get.off(const ContactsScreen());
+
+        loadContacts();
+      } else {
+        Get.snackbar("Error", "Please fill all fields correctly");
       }
-      Get.off(const ContactsScreen());
     } catch (e) {
       log('Error: $e');
       Get.snackbar('Error', 'Something went wrong');
     }
   }
 
-// ...............Sort list contact....................
+// ........................Load contact..........................
 
-  /* void sortContacts(Box<ContactModel> box, bool ascending) {
-    final contacts = box.values.toList();
-
-    contacts.sort((a, b) => ascending
-        ? a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase())
-        : b.firstName.toLowerCase().compareTo(a.firstName.toLowerCase()));
-
-      box.clear();
-    for (var contact in contacts) {
-      box.add(contact);
-    }
-  }
-*/
-  void sortContacts(Box<ContactModel> box, bool ascending,
-      {bool sortByFirstName = true}) {
+  void loadContacts() {
+    final box = Hive.box<ContactModel>('contacts');
     final contacts = box.values.toList();
 
     contacts.sort((a, b) {
-      String aName = sortByFirstName ? a.firstName.trim() : a.lastName.trim();
-      String bName = sortByFirstName ? b.firstName.trim() : b.lastName.trim();
+      String aName = '';
+      String bName = '';
 
-      String aChar = aName.isNotEmpty ? aName[0].toUpperCase() : '';
-      String bChar = bName.isNotEmpty ? bName[0].toUpperCase() : '';
-
-      bool aIsLetter = RegExp(r'^[A-Z]$').hasMatch(aChar);
-      bool bIsLetter = RegExp(r'^[A-Z]$').hasMatch(bChar);
-
-      if (aIsLetter && bIsLetter) {
-        return ascending
-            ? aName.toLowerCase().compareTo(bName.toLowerCase())
-            : bName.toLowerCase().compareTo(aName.toLowerCase());
+      if (lastSortByFirstName) {
+        aName = a.firstName.trim().isNotEmpty
+            ? a.firstName.trim()
+            : a.lastName.trim();
+        bName = b.firstName.trim().isNotEmpty
+            ? b.firstName.trim()
+            : b.lastName.trim();
+      } else {
+        aName = a.lastName.trim().isNotEmpty
+            ? a.lastName.trim()
+            : a.firstName.trim();
+        bName = b.lastName.trim().isNotEmpty
+            ? b.lastName.trim()
+            : b.firstName.trim();
       }
 
-      if (aIsLetter && !bIsLetter) return -1;
-      if (!aIsLetter && bIsLetter) return 1;
+      return lastSortAscending
+          ? aName.toLowerCase().compareTo(bName.toLowerCase())
+          : bName.toLowerCase().compareTo(aName.toLowerCase());
+    });
+
+    displayedContacts.value = contacts;
+  }
+
+// .....................Sort list contact..........................
+
+  void sortContacts(bool ascending, {bool sortByFirstName = true}) async {
+    lastSortAscending = ascending;
+    lastSortByFirstName = sortByFirstName;
+
+    final box = Hive.box<ContactModel>('contacts');
+    final contacts = box.values.toList();
+
+    contacts.sort((a, b) {
+      final aName = sortByFirstName ? a.firstName.trim() : a.lastName.trim();
+      final bName = sortByFirstName ? b.firstName.trim() : b.lastName.trim();
 
       return ascending
           ? aName.toLowerCase().compareTo(bName.toLowerCase())
           : bName.toLowerCase().compareTo(aName.toLowerCase());
     });
 
-    box.clear();
-    for (var contact in contacts) {
-      box.add(contact);
+    await box.clear();
+    for (final contact in contacts) {
+      await box.add(contact);
     }
+
+    loadContacts();
   }
 
-// .....................Pick Image.....................
+//................ Delete all contact list........................
+
+  void deleteAllContacts() async {
+    final box = Hive.box<ContactModel>('contacts');
+    await box.clear();
+    displayedContacts.clear();
+  }
+
+  // .....................Pick Image.....................
 
   final Rx<XFile?> pickedImage = Rx<XFile?>(null);
   final Rx<Uint8List?> webImage = Rx<Uint8List?>(null);
@@ -222,7 +244,36 @@ class ContactController extends GetxController {
       final resStr = await response.stream.bytesToString();
       final data = json.decode(resStr);
       uploadedImageUrl.value = data['secure_url'];
-      Get.snackbar('Success', 'Image uploaded!');
+      // Get.snackbar('Success', 'Image uploaded!');
+    }
+  }
+
+//.......................Search bar..........................
+
+  var isSearching = false.obs;
+  final searchTextController = TextEditingController();
+
+  void toggleSearch() {
+    isSearching.toggle();
+    if (!isSearching.value) {
+      searchTextController.clear();
+      displayedContacts.refresh();
+    }
+  }
+
+//.........................Search contacts......................
+  void filterContacts(String query) {
+    final box = Hive.box<ContactModel>('contacts');
+    final allContacts = box.values.toList();
+
+    if (query.isEmpty) {
+      displayedContacts.value = allContacts;
+    } else {
+      displayedContacts.value = allContacts.where((contact) {
+        final name = '${contact.firstName} ${contact.lastName}'.toLowerCase();
+        final phone = contact.phone.toLowerCase();
+        return name.contains(query.toLowerCase()) || phone.contains(query);
+      }).toList();
     }
   }
 }
